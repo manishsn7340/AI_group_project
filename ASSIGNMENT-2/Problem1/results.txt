@@ -1,0 +1,196 @@
+PROBLEM 1: SMART HOME ENERGY CONSUMPTION ANALYSIS
+Team: E.D.I.T.H
+Group members: SATYAM SINGH (B24CS038); SHIVAM CHAURASIA (B24CS039); Manish Shyoran (B24CS026); MITU KUMAR (B24CS029)
+Random seed: 42
+CPT validation: PASS (16 rows; every row sums to 1)
+
+PART A - EXPERT MODEL
+Network edges: DayType->Occupancy, Weather->AC, Occupancy->AC, Occupancy->ApplianceLoad, AC->EnergyConsumption, ApplianceLoad->EnergyConsumption
+Q1: 0.5806310375
+Q2: 0.7062657500
+Q3: 0.6401985000
+Q4: 0.4842500000
+Q5: 0.6081880785
+Q6: 0.6928666813
+Q7: 0.6498993030
+
+Q1 hand calculation:
+P(E=High) = sum[w,d,o] P(w)P(d)P(o|d) sum[a,l] P(a|w,o)P(l|o)P(E=High|a,l)
+  Hot , Weekday, High: prefix=0.15750000 * (0.62100000 + 0.15300000 + 0.04125000 + 0.00300000) = 0.12887438
+  Hot , Weekday, Low : prefix=0.19250000 * (0.19320000 + 0.26520000 + 0.07700000 + 0.03120000) = 0.10907050
+  Hot , Weekend, High: prefix=0.12000000 * (0.62100000 + 0.15300000 + 0.04125000 + 0.00300000) = 0.09819000
+  Hot , Weekend, Low : prefix=0.03000000 * (0.19320000 + 0.26520000 + 0.07700000 + 0.03120000) = 0.01699800
+  Mild, Weekday, High: prefix=0.09450000 * (0.27600000 + 0.06800000 + 0.24750000 + 0.01800000) = 0.05759775
+  Mild, Weekday, Low : prefix=0.11550000 * (0.04830000 + 0.06630000 + 0.16362500 + 0.06630000) = 0.03979264
+  Mild, Weekend, High: prefix=0.07200000 * (0.27600000 + 0.06800000 + 0.24750000 + 0.01800000) = 0.04388400
+  Mild, Weekend, Low : prefix=0.01800000 * (0.04830000 + 0.06630000 + 0.16362500 + 0.06630000) = 0.00620145
+  Cold, Weekday, High: prefix=0.06300000 * (0.06900000 + 0.01700000 + 0.37125000 + 0.02700000) = 0.03050775
+  Cold, Weekday, Low : prefix=0.07700000 * (0.01610000 + 0.02210000 + 0.18287500 + 0.07410000) = 0.02272847
+  Cold, Weekend, High: prefix=0.04800000 * (0.06900000 + 0.01700000 + 0.37125000 + 0.02700000) = 0.02324400
+  Cold, Weekend, Low : prefix=0.01200000 * (0.01610000 + 0.02210000 + 0.18287500 + 0.07410000) = 0.00354210
+Q1 = 0.5806310375
+Code Q1 = 0.5806310375; hand Q1 = 0.5806310375; MATCH
+Explaining away: Q6=P(AC=On|E=High)=0.6928666813; Q7=P(AC=On|E=High,L=Heavy)=0.6498993030. Observing the alternative cause ApplianceLoad=Heavy explains part of the high-energy evidence, so the posterior probability of AC=On DECREASES (0.6929 -> 0.6499).
+
+PART B - CONDITIONAL INDEPENDENCE
+1. Weather independent of DayType: YES. They are separate root nodes.
+   Numerical check: 0.5000000000 vs 0.5000000000
+2. Weather independent of DayType given EnergyConsumption: NO. Observing the collider EnergyConsumption opens two paths: Weather->AC->EnergyConsumption<-ApplianceLoad<-Occupancy<-DayType, and the shorter Weather->AC<-Occupancy<-DayType, where the collider AC is opened because its descendant EnergyConsumption is observed.
+   Numerical check: 0.6081880785 vs 0.5997514833
+3. Weather independent of ApplianceLoad given Occupancy: YES. The path Weather->AC<-Occupancy->ApplianceLoad is blocked at the collider AC and conditioning on Occupancy blocks the fork path.
+   Numerical check: 0.5000000000 vs 0.5000000000
+
+PART C - SYNTHETIC DATA
+Dataset size 500:
+  Weather counts: Hot=255 (0.510000), Mild=143 (0.286000), Cold=102 (0.204000)
+  (Weather, Occupancy) counts: (Hot,High)=155, (Hot,Low)=100, (Mild,High)=75, (Mild,Low)=68, (Cold,High)=51, (Cold,Low)=51
+
+PART D - LEARNING, DATASET SIZE 500
+MLE learned AC CPT alongside expert:
+AC CPT (expert)
+  Weather=Hot, Occupancy=High: P(On)=0.900000, P(Off)=0.100000
+  Weather=Hot, Occupancy=Low: P(On)=0.600000, P(Off)=0.400000
+  Weather=Mild, Occupancy=High: P(On)=0.400000, P(Off)=0.600000
+  Weather=Mild, Occupancy=Low: P(On)=0.150000, P(Off)=0.850000
+  Weather=Cold, Occupancy=High: P(On)=0.100000, P(Off)=0.900000
+  Weather=Cold, Occupancy=Low: P(On)=0.050000, P(Off)=0.950000
+AC CPT (learned, MLE)
+  Weather=Hot, Occupancy=High: P(On)=0.851613, P(Off)=0.148387
+  Weather=Hot, Occupancy=Low: P(On)=0.660000, P(Off)=0.340000
+  Weather=Mild, Occupancy=High: P(On)=0.360000, P(Off)=0.640000
+  Weather=Mild, Occupancy=Low: P(On)=0.176471, P(Off)=0.823529
+  Weather=Cold, Occupancy=High: P(On)=0.098039, P(Off)=0.901961
+  Weather=Cold, Occupancy=Low: P(On)=0.019608, P(Off)=0.980392
+Queries: Q1=0.5569772731, Q2=0.7049690498, Q3=0.6092421094, Q4=0.4203053826, Q5=0.6455096694, Q6=0.7279806640, Q7=0.6583651208
+Bayesian learned AC CPT alongside expert:
+AC CPT (expert)
+  Weather=Hot, Occupancy=High: P(On)=0.900000, P(Off)=0.100000
+  Weather=Hot, Occupancy=Low: P(On)=0.600000, P(Off)=0.400000
+  Weather=Mild, Occupancy=High: P(On)=0.400000, P(Off)=0.600000
+  Weather=Mild, Occupancy=Low: P(On)=0.150000, P(Off)=0.850000
+  Weather=Cold, Occupancy=High: P(On)=0.100000, P(Off)=0.900000
+  Weather=Cold, Occupancy=Low: P(On)=0.050000, P(Off)=0.950000
+AC CPT (learned, Bayesian)
+  Weather=Hot, Occupancy=High: P(On)=0.847872, P(Off)=0.152128
+  Weather=Hot, Occupancy=Low: P(On)=0.657377, P(Off)=0.342623
+  Weather=Mild, Occupancy=High: P(On)=0.363043, P(Off)=0.636957
+  Weather=Mild, Occupancy=Low: P(On)=0.184211, P(Off)=0.815789
+  Weather=Cold, Occupancy=High: P(On)=0.110759, P(Off)=0.889241
+  Weather=Cold, Occupancy=Low: P(On)=0.034810, P(Off)=0.965190
+Queries: Q1=0.5559386915, Q2=0.6991079438, Q3=0.6045624855, Q4=0.4267894990, Q5=0.6369826570, Q6=0.7236100801, Q7=0.6559515961
+Dataset size 5000:
+  Weather counts: Hot=2496 (0.499200), Mild=1510 (0.302000), Cold=994 (0.198800)
+  (Weather, Occupancy) counts: (Hot,High)=1402, (Hot,Low)=1094, (Mild,High)=823, (Mild,Low)=687, (Cold,High)=558, (Cold,Low)=436
+
+PART D - LEARNING, DATASET SIZE 5000
+MLE learned AC CPT alongside expert:
+AC CPT (expert)
+  Weather=Hot, Occupancy=High: P(On)=0.900000, P(Off)=0.100000
+  Weather=Hot, Occupancy=Low: P(On)=0.600000, P(Off)=0.400000
+  Weather=Mild, Occupancy=High: P(On)=0.400000, P(Off)=0.600000
+  Weather=Mild, Occupancy=Low: P(On)=0.150000, P(Off)=0.850000
+  Weather=Cold, Occupancy=High: P(On)=0.100000, P(Off)=0.900000
+  Weather=Cold, Occupancy=Low: P(On)=0.050000, P(Off)=0.950000
+AC CPT (learned, MLE)
+  Weather=Hot, Occupancy=High: P(On)=0.893723, P(Off)=0.106277
+  Weather=Hot, Occupancy=Low: P(On)=0.618830, P(Off)=0.381170
+  Weather=Mild, Occupancy=High: P(On)=0.390036, P(Off)=0.609964
+  Weather=Mild, Occupancy=Low: P(On)=0.151383, P(Off)=0.848617
+  Weather=Cold, Occupancy=High: P(On)=0.103943, P(Off)=0.896057
+  Weather=Cold, Occupancy=Low: P(On)=0.048165, P(Off)=0.951835
+Queries: Q1=0.5794023424, Q2=0.7033506355, Q3=0.6399313791, Q4=0.4859761015, Q5=0.6059910559, Q6=0.6884368413, Q7=0.6495639453
+Bayesian learned AC CPT alongside expert:
+AC CPT (expert)
+  Weather=Hot, Occupancy=High: P(On)=0.900000, P(Off)=0.100000
+  Weather=Hot, Occupancy=Low: P(On)=0.600000, P(Off)=0.400000
+  Weather=Mild, Occupancy=High: P(On)=0.400000, P(Off)=0.600000
+  Weather=Mild, Occupancy=Low: P(On)=0.150000, P(Off)=0.850000
+  Weather=Cold, Occupancy=High: P(On)=0.100000, P(Off)=0.900000
+  Weather=Cold, Occupancy=Low: P(On)=0.050000, P(Off)=0.950000
+AC CPT (learned, Bayesian)
+  Weather=Hot, Occupancy=High: P(On)=0.893256, P(Off)=0.106744
+  Weather=Hot, Occupancy=Low: P(On)=0.618649, P(Off)=0.381351
+  Weather=Mild, Occupancy=High: P(On)=0.390259, P(Off)=0.609741
+  Weather=Mild, Occupancy=Low: P(On)=0.152227, P(Off)=0.847773
+  Weather=Cold, Occupancy=High: P(On)=0.105122, P(Off)=0.894878
+  Weather=Cold, Occupancy=Low: P(On)=0.049886, P(Off)=0.950114
+Queries: Q1=0.5792500339, Q2=0.7027895168, Q3=0.6393249718, Q4=0.4863303075, Q5=0.6052651410, Q6=0.6880759825, Q7=0.6493155047
+Dataset size 20000:
+  Weather counts: Hot=9906 (0.495300), Mild=6116 (0.305800), Cold=3978 (0.198900)
+  (Weather, Occupancy) counts: (Hot,High)=5520, (Hot,Low)=4386, (Mild,High)=3416, (Mild,Low)=2700, (Cold,High)=2228, (Cold,Low)=1750
+
+PART D - LEARNING, DATASET SIZE 20000
+MLE learned AC CPT alongside expert:
+AC CPT (expert)
+  Weather=Hot, Occupancy=High: P(On)=0.900000, P(Off)=0.100000
+  Weather=Hot, Occupancy=Low: P(On)=0.600000, P(Off)=0.400000
+  Weather=Mild, Occupancy=High: P(On)=0.400000, P(Off)=0.600000
+  Weather=Mild, Occupancy=Low: P(On)=0.150000, P(Off)=0.850000
+  Weather=Cold, Occupancy=High: P(On)=0.100000, P(Off)=0.900000
+  Weather=Cold, Occupancy=Low: P(On)=0.050000, P(Off)=0.950000
+AC CPT (learned, MLE)
+  Weather=Hot, Occupancy=High: P(On)=0.901268, P(Off)=0.098732
+  Weather=Hot, Occupancy=Low: P(On)=0.600775, P(Off)=0.399225
+  Weather=Mild, Occupancy=High: P(On)=0.396956, P(Off)=0.603044
+  Weather=Mild, Occupancy=Low: P(On)=0.147778, P(Off)=0.852222
+  Weather=Cold, Occupancy=High: P(On)=0.104129, P(Off)=0.895871
+  Weather=Cold, Occupancy=Low: P(On)=0.053714, P(Off)=0.946286
+Queries: Q1=0.5768234052, Q2=0.7027793162, Q3=0.6380752167, Q4=0.4838110458, Q5=0.6034543540, Q6=0.6921927383, Q7=0.6499496094
+Bayesian learned AC CPT alongside expert:
+AC CPT (expert)
+  Weather=Hot, Occupancy=High: P(On)=0.900000, P(Off)=0.100000
+  Weather=Hot, Occupancy=Low: P(On)=0.600000, P(Off)=0.400000
+  Weather=Mild, Occupancy=High: P(On)=0.400000, P(Off)=0.600000
+  Weather=Mild, Occupancy=Low: P(On)=0.150000, P(Off)=0.850000
+  Weather=Cold, Occupancy=High: P(On)=0.100000, P(Off)=0.900000
+  Weather=Cold, Occupancy=Low: P(On)=0.050000, P(Off)=0.950000
+AC CPT (learned, Bayesian)
+  Weather=Hot, Occupancy=High: P(On)=0.901147, P(Off)=0.098853
+  Weather=Hot, Occupancy=Low: P(On)=0.600737, P(Off)=0.399263
+  Weather=Mild, Occupancy=High: P(On)=0.397006, P(Off)=0.602994
+  Weather=Mild, Occupancy=Low: P(On)=0.147995, P(Off)=0.852005
+  Weather=Cold, Occupancy=High: P(On)=0.104425, P(Off)=0.895575
+  Weather=Cold, Occupancy=Low: P(On)=0.054139, P(Off)=0.945861
+Queries: Q1=0.5767867189, Q2=0.7026380746, Q3=0.6379227296, Q4=0.4838998801, Q5=0.6032728450, Q6=0.6921007730, Q7=0.6498855565
+
+PART E - COMPARISON
+
+Dataset size: 500
+Query       Expert          MLE             Bayesian        |Diff| MLE   |Diff| Bayesian
+Q1         0.5806310375    0.5569772731    0.5559386915    0.0236537644   0.0246923460
+Q2         0.7062657500    0.7049690498    0.6991079438    0.0012967002   0.0071578062
+Q3         0.6401985000    0.6092421094    0.6045624855    0.0309563906   0.0356360145
+Q4         0.4842500000    0.4203053826    0.4267894990    0.0639446174   0.0574605010
+Q5         0.6081880785    0.6455096694    0.6369826570    0.0373215909   0.0287945785
+Q6         0.6928666813    0.7279806640    0.7236100801    0.0351139827   0.0307433988
+Q7         0.6498993030    0.6583651208    0.6559515961    0.0084658178   0.0060522931
+Mean absolute difference: MLE=0.0286789806, Bayesian=0.0272195626
+
+Dataset size: 5000
+Query       Expert          MLE             Bayesian        |Diff| MLE   |Diff| Bayesian
+Q1         0.5806310375    0.5794023424    0.5792500339    0.0012286951   0.0013810036
+Q2         0.7062657500    0.7033506355    0.7027895168    0.0029151145   0.0034762332
+Q3         0.6401985000    0.6399313791    0.6393249718    0.0002671209   0.0008735282
+Q4         0.4842500000    0.4859761015    0.4863303075    0.0017261015   0.0020803075
+Q5         0.6081880785    0.6059910559    0.6052651410    0.0021970226   0.0029229375
+Q6         0.6928666813    0.6884368413    0.6880759825    0.0044298400   0.0047906988
+Q7         0.6498993030    0.6495639453    0.6493155047    0.0003353577   0.0005837983
+Mean absolute difference: MLE=0.0018713217, Bayesian=0.0023012153
+
+Dataset size: 20000
+Query       Expert          MLE             Bayesian        |Diff| MLE   |Diff| Bayesian
+Q1         0.5806310375    0.5768234052    0.5767867189    0.0038076323   0.0038443186
+Q2         0.7062657500    0.7027793162    0.7026380746    0.0034864338   0.0036276754
+Q3         0.6401985000    0.6380752167    0.6379227296    0.0021232833   0.0022757704
+Q4         0.4842500000    0.4838110458    0.4838998801    0.0004389542   0.0003501199
+Q5         0.6081880785    0.6034543540    0.6032728450    0.0047337245   0.0049152335
+Q6         0.6928666813    0.6921927383    0.6921007730    0.0006739430   0.0007659083
+Q7         0.6498993030    0.6499496094    0.6498855565    0.0000503064   0.0000137465
+Mean absolute difference: MLE=0.0021877539, Bayesian=0.0022561104
+
+500-sample error diagnosis
+Evidence counts: Q1=500, Q2=255, Q3=157, Q4=51, Q5=280, Q6=280, Q7=198
+Largest MLE error: Q4 (absolute error=0.0639446174). Its conditioning evidence is comparatively infrequent, so its learned conditional probability is estimated from fewer samples and has higher sampling variance.
+For this seed, Bayesian estimation is slightly better on the 500-sample dataset (mean error 0.0272 vs 0.0287 for MLE; it wins on only some queries) because the BDeu prior smooths sparse CPT rows. At 5000 and 20000 samples the two estimators are practically equal (MLE marginally ahead) and both errors are tiny. The error is not strictly monotone between 5000 and 20000 because it is dominated by sampling noise of this single seed (the datasets are nested prefixes of one stream).
+
+Generated files: bayesian_network.png, mean_absolute_difference.png
